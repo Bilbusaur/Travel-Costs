@@ -2,6 +2,7 @@ import tkinter as tk
 from tkinter import ttk, scrolledtext
 from calculations import calculate_costs
 from utils.api_integration import get_distance, API_KEY
+import requests
 
 
 def launch_gui():
@@ -9,8 +10,9 @@ def launch_gui():
     def calculate_and_display_results():
         try:
             # Collect inputs from GUI
+            origin = origin_entry.get()
+            destination = destination_entry.get()
             number_of_days = float(days_entry.get())
-            daily_distance = float(distance_entry.get())
             fuel_cost_per_gallon = float(fuel_cost_entry.get())
             fuel_efficiency_mpg = float(fuel_efficiency_entry.get())
             fitter_rate = float(fitter_rate_entry.get())
@@ -18,16 +20,21 @@ def launch_gui():
             travel_option = travel_option_var.get()
             one_way_travel_time = float(travel_time_entry.get())
 
+            #Fetch distance from the API
+            distance = get_distance(API_KEY, origin, destination)
+            if distance is None:
+                raise ValueError("Unable to fetch distance. Please check your locations")
+
             # Call calculate_costs from calculations.py
             result_text = calculate_costs(
-                number_of_days,
-                daily_distance,
-                fuel_cost_per_gallon,
-                fuel_efficiency_mpg,
-                fitter_rate,
-                apprentice_rate,
-                travel_option,
-                one_way_travel_time
+            number_of_days=number_of_days,
+            daily_distance=distance,
+            fuel_cost_per_gallon=fuel_cost_per_gallon,
+            fuel_efficiency_mpg=fuel_efficiency_mpg,
+            fitter_rate=fitter_rate,
+            apprentice_rate=apprentice_rate,
+            travel_option=travel_option,
+            one_way_travel_time=one_way_travel_time,
             )
 
             # Display the result
@@ -62,14 +69,16 @@ def launch_gui():
     input_frame.pack(pady=10)
 
     fields = [
-        ("Number of Days:", "days_entry"),
-        ("Daily Round Trip Distance (miles):", "distance_entry"),
-        ("Fuel Cost per Gallon (£):", "fuel_cost_entry"),
-        ("Fuel Efficiency (MPG):", "fuel_efficiency_entry"),
-        ("Fitter Hourly Rate (£):", "fitter_rate_entry"),
-        ("Apprentice Hourly Rate (£):", "apprentice_rate_entry"),
-        ("One-Way Travel Time (hours):", "travel_time_entry")
-    ]
+            ("Origin Location:", "origin_entry"),
+            ("Destination Location:", "destination_entry"),
+            ("Number of Days:", "days_entry"),
+            ("Fuel Cost per Gallon (£):", "fuel_cost_entry"),
+            ("Fuel Efficiency (MPG):", "fuel_efficiency_entry"),
+            ("Fitter Hourly Rate (£):", "fitter_rate_entry"),
+            ("Apprentice Hourly Rate (£):", "apprentice_rate_entry"),
+            ("One-Way Travel Time (hours):", "travel_time_entry"),
+]
+
 
     entries = {}
     for i, (label, var_name) in enumerate(fields):
@@ -78,14 +87,17 @@ def launch_gui():
         entry.grid(row=i, column=1, padx=10, pady=5, ipady=6, ipadx=8)
         entries[var_name] = entry
 
+
     # Assign variables
+    origin_entry = entries["origin_entry"]
+    destination_entry = entries["destination_entry"]
     days_entry = entries["days_entry"]
-    distance_entry = entries["distance_entry"]
     fuel_cost_entry = entries["fuel_cost_entry"]
     fuel_efficiency_entry = entries["fuel_efficiency_entry"]
     fitter_rate_entry = entries["fitter_rate_entry"]
     apprentice_rate_entry = entries["apprentice_rate_entry"]
     travel_time_entry = entries["travel_time_entry"]
+
 
     # Travel Option Dropdown
     travel_option_var = tk.StringVar(value="Return + Overtime")
