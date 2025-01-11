@@ -1,0 +1,29 @@
+# Byte-compiled files
+__pycache__/
+*.pyc
+*.pyo
+
+# Virtual environment
+.venv/
+env/
+
+# Build and dist directories
+build/
+dist/
+
+# PyInstaller
+*.spec
+
+# Executables and archives
+*.exe
+*.zip
+
+# Logs and temp files
+*.log
+*.tmp
+*.bak
+*.swp
+
+# Data files
+data/*
+!data/sample_routes.json
