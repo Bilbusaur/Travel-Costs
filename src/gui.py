@@ -1,6 +1,8 @@
 import tkinter as tk
 from tkinter import ttk, scrolledtext
 from calculations import calculate_costs
+from utils.api_integration import get_distance, API_KEY
+
 
 def launch_gui():
     # Function to call calculations and display results
