@@ -78,9 +78,8 @@ An intuitive Python application designed to calculate travel costs dynamically u
 
 ---
 
-### **Acknowledgments**
-This project wouldn’t be possible without the power of APIs, dynamic problem-solving, and a good bit of perseverance. 🐒🔥✨
+🐒🔥✨
 
 ---
 
-How does that look, Captain? Let me know if you’d like any tweaks or additions! 🚀✨
+
