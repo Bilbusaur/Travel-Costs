@@ -4,9 +4,12 @@ def calculate_costs(number_of_days, daily_distance, fuel_cost_per_gallon, fuel_e
     apprentice_overtime = apprentice_rate * 1.5
 
     if travel_option == "One Way":
-        adjusted_distance = daily_distance / 2
-    elif travel_option in ["Return Trip", "Return + Overtime"]:
-        adjusted_distance = daily_distance
+        adjusted_distance = daily_distance 
+    elif travel_option == "Return Trip": 
+        adjusted_distance = daily_distance * 2
+    elif travel_option == "Return + Overtime":
+        adjusted_distance = daily_distance * 2
+
 
     daily_fuel_usage = adjusted_distance / fuel_efficiency_mpg
     daily_fuel_cost = daily_fuel_usage * fuel_cost_per_gallon
