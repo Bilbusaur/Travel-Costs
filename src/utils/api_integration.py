@@ -14,6 +14,7 @@ def get_distance(API_KEY, origin, destination):
         "destinations": destination,
         "key": API_KEY,
         "units": "imperial",  # Use "metric" for kilometers
+        "mode": "driving",  # Ensure the calculation is for driving
     }
 
     try:
@@ -24,17 +25,11 @@ def get_distance(API_KEY, origin, destination):
        # Extract the distance
         distance_text = data["rows"][0]["elements"][0]["distance"]["text"]
         distance_value = float(distance_text.split()[0])  # Numeric value in miles
+        
+
         return distance_value
+        print("Full API Response:", data)  # Inside the get_distance function
     except (requests.RequestException, KeyError, IndexError, ValueError) as e:
         print(f"Error fetching distance: {e}")
         return None
 
-# Test the function
-if __name__ == "__main__":
-    origin = "London, UK"
-    destination = "Manchester, UK"
-    distance = get_distance(API_KEY, origin, destination)
-    if distance is not None:
-        print(f"Distance from {origin} to {destination}: {distance} miles")
-    else:
-        print("Failed to fetch distance.")
