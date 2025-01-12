@@ -1,4 +1,4 @@
-def calculate_costs(number_of_days, daily_distance, fuel_cost_per_gallon, fuel_efficiency_mpg,
+def calculate_costs(number_of_days, daily_distance, fuel_efficiency_mpg, diesel_price_per_litre,
                     fitter_rate, apprentice_rate, travel_option, one_way_travel_time):
     fitter_overtime = fitter_rate * 1.5
     apprentice_overtime = apprentice_rate * 1.5
@@ -10,9 +10,10 @@ def calculate_costs(number_of_days, daily_distance, fuel_cost_per_gallon, fuel_e
     elif travel_option == "Return + Overtime":
         adjusted_distance = daily_distance * 2
 
-
-    daily_fuel_usage = adjusted_distance / fuel_efficiency_mpg
-    daily_fuel_cost = daily_fuel_usage * fuel_cost_per_gallon
+    mpl = fuel_efficiency_mpg / 4.546
+    liters_per_mile = 1 / mpl
+    daily_fuel_usage = adjusted_distance * liters_per_mile
+    daily_fuel_cost = daily_fuel_usage * diesel_price_per_litre 
 
     if travel_option == "One Way":
         fitter_travel_cost = one_way_travel_time * fitter_rate
@@ -27,13 +28,14 @@ def calculate_costs(number_of_days, daily_distance, fuel_cost_per_gallon, fuel_e
     daily_labor_travel_cost = fitter_travel_cost + apprentice_travel_cost
     daily_total_travel_cost = daily_labor_travel_cost + daily_fuel_cost
     total_travel_cost = daily_total_travel_cost * number_of_days
+    
 
     return (
         f"=== Travel Cost Breakdown ===\n"
         f"Travel Scenario: {travel_option}\n"
         f"Adjusted Daily Distance: {adjusted_distance} miles\n"
         f"Fuel Efficiency: {fuel_efficiency_mpg} MPG\n"
-        f"Fuel Cost per Gallon: £{fuel_cost_per_gallon:.2f}\n"
+        f"Diesel Per Ltr: £{diesel_price_per_litre:.2f}\n"
         f"Daily Fuel Cost: £{daily_fuel_cost:.2f}\n\n"
         f"--- Labour Costs ---\n"
         f"Fitter Travel Cost (Daily): £{fitter_travel_cost:.2f}\n"

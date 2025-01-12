@@ -2,39 +2,57 @@ import tkinter as tk
 from tkinter import ttk, scrolledtext
 from calculations import calculate_costs
 from utils.api_integration import get_distance, API_KEY
+from utils.fuel_api import fetch_fuel_data, parse_diesel_price
 import requests
+diesel_price_per_litre = None
+
+def fetch_and_set_diesel_price():
+    global diesel_price_per_litre  # Use the global variable
+    url = "https://jetlocal.co.uk/fuel_prices_data.json"  # Replace with actual URL
+    fuel_data = fetch_fuel_data(url)
+    if fuel_data:
+        diesel_price_per_litre = parse_diesel_price(fuel_data)
+        if diesel_price_per_litre is None:
+            diesel_price_per_litre = "Unavailable"
+    else:
+        diesel_price_per_litre = "Unavailable"
 
 
 def launch_gui():
+    # Fetch diesel price before setting up the GUI
+    fetch_and_set_diesel_price()
     # Function to call calculations and display results
     def calculate_and_display_results():
         try:
+            global diesel_price_per_gallon  # Access the global variable
+            if not isinstance(diesel_price_per_litre, float):
+                raise ValueError("Diesel price is unavailable.")
+
             # Collect inputs from GUI
             origin = origin_entry.get()
             destination = destination_entry.get()
             number_of_days = float(days_entry.get())
-            fuel_cost_per_gallon = float(fuel_cost_entry.get())
             fuel_efficiency_mpg = float(fuel_efficiency_entry.get())
             fitter_rate = float(fitter_rate_entry.get())
             apprentice_rate = float(apprentice_rate_entry.get())
             travel_option = travel_option_var.get()
             one_way_travel_time = float(travel_time_entry.get())
 
-            #Fetch distance from the API
+            # Fetch distance from the API
             distance = get_distance(API_KEY, origin, destination)
             if distance is None:
-                raise ValueError("Unable to fetch distance. Please check your locations")
+                raise ValueError("Unable to fetch distance. Please check your locations.")
 
-            # Call calculate_costs from calculations.py
+            # Perform the cost calculations
             result_text = calculate_costs(
-            number_of_days=number_of_days,
-            daily_distance=distance,
-            fuel_cost_per_gallon=fuel_cost_per_gallon,
-            fuel_efficiency_mpg=fuel_efficiency_mpg,
-            fitter_rate=fitter_rate,
-            apprentice_rate=apprentice_rate,
-            travel_option=travel_option,
-            one_way_travel_time=one_way_travel_time,
+                number_of_days=number_of_days,
+                daily_distance=distance,
+                fuel_efficiency_mpg=fuel_efficiency_mpg,
+                diesel_price_per_litre=diesel_price_per_litre,
+                fitter_rate=fitter_rate,
+                apprentice_rate=apprentice_rate,
+                travel_option=travel_option,
+                one_way_travel_time=one_way_travel_time,
             )
 
             # Display the result
@@ -42,11 +60,15 @@ def launch_gui():
             result_textbox.delete("1.0", tk.END)
             result_textbox.insert(tk.END, result_text)
             result_textbox.config(state="disabled")
-        except ValueError:
+        except ValueError as e:
             result_textbox.config(state="normal")
             result_textbox.delete("1.0", tk.END)
-            result_textbox.insert(tk.END, "Invalid input! Please enter numeric values.")
+            result_textbox.insert(tk.END, f"Error: {e}")
             result_textbox.config(state="disabled")
+            
+            
+
+
 
     # GUI setup
     root = tk.Tk()
@@ -64,6 +86,7 @@ def launch_gui():
     header_label = ttk.Label(root, text="Travel Cost Calculator", font=("Arial", 20, "bold"), foreground="#1abc9c", background="#2c3e50")
     header_label.pack(pady=20)
 
+
     # Input Frame
     input_frame = tk.Frame(root, bg="#2c3e50")
     input_frame.pack(pady=10)
@@ -72,7 +95,6 @@ def launch_gui():
             ("Origin Location:", "origin_entry"),
             ("Destination Location:", "destination_entry"),
             ("Number of Days:", "days_entry"),
-            ("Fuel Cost per Gallon (£):", "fuel_cost_entry"),
             ("Fuel Efficiency (MPG):", "fuel_efficiency_entry"),
             ("Fitter Hourly Rate (£):", "fitter_rate_entry"),
             ("Apprentice Hourly Rate (£):", "apprentice_rate_entry"),
@@ -92,7 +114,6 @@ def launch_gui():
     origin_entry = entries["origin_entry"]
     destination_entry = entries["destination_entry"]
     days_entry = entries["days_entry"]
-    fuel_cost_entry = entries["fuel_cost_entry"]
     fuel_efficiency_entry = entries["fuel_efficiency_entry"]
     fitter_rate_entry = entries["fitter_rate_entry"]
     apprentice_rate_entry = entries["apprentice_rate_entry"]
@@ -106,7 +127,7 @@ def launch_gui():
     travel_option_dropdown.grid(row=len(fields), column=1, padx=10, pady=5)
 
     # Calculate Button
-    calculate_button = tk.Button(root, text="Calculate Costs", command=calculate_and_display_results, font=("Arial", 12, "bold"), bg="#1abc9c", fg="white", activebackground="#16a085", activeforeground="white", relief="flat", bd=0)
+    calculate_button = tk.Button(root, text="Calculate Costs", command=lambda: calculate_and_display_results(), font=("Arial", 12, "bold"), bg="#1abc9c", fg="white", activebackground="#16a085", activeforeground="white", relief="flat", bd=0)
     calculate_button.pack(pady=15, ipady=6, ipadx=20)
 
     # Results Frame
