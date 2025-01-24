@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import ttk, scrolledtext
 from calculations import calculate_costs
-from utils.api_integration import get_distance, API_KEY
+from utils.api_integration import get_distance_and_time, API_KEY
 from utils.fuel_api import fetch_fuel_data, parse_diesel_price
 import requests
 
@@ -42,6 +42,8 @@ def launch_gui():
             travel_miles_entry.grid(row=0, column=1, padx=10, pady=5, sticky="w")
             fuel_cost_label.grid(row=1, column=0, padx=10, pady=5, sticky="e")
             fuel_cost_entry.grid(row=1, column=1, padx=10, pady=5, sticky="w")
+            travel_time_label.grid()
+            travel_time_entry.grid()
 
             # Hide automatic inputs
             origin_label.grid_remove()
@@ -54,6 +56,9 @@ def launch_gui():
             travel_miles_entry.grid_remove()
             fuel_cost_label.grid_remove()
             fuel_cost_entry.grid_remove()
+            travel_time_label.grid_remove()
+            travel_time_entry.grid_remove()
+            
 
             # Show automatic inputs
             origin_label.grid(row=0, column=0, padx=10, pady=5, sticky="e")
@@ -61,51 +66,64 @@ def launch_gui():
             destination_label.grid(row=1, column=0, padx=10, pady=5, sticky="e")
             destination_entry.grid(row=1, column=1, padx=10, pady=5, sticky="w")
 
-    # Function to call calculations and display results
     def calculate_and_display_results():
         try:
-            if mode.get() == "manual":
-                # Manual Mode: Use user-provided values
-                distance = float(travel_miles_entry.get())
-                diesel_price = float(fuel_cost_entry.get())
-            else:
-                # Automatic Mode: Use API-based values
-                global diesel_price_per_litre
-                if not isinstance(diesel_price_per_litre, float):
-                    raise ValueError("Diesel price is unavailable.")
-                distance = get_distance(API_KEY, origin_entry.get(), destination_entry.get())
-                diesel_price = diesel_price_per_litre
-            
-            # Common inputs for both modes
+            global diesel_price_per_litre  # Access the global variable
+            if not isinstance(diesel_price_per_litre, float):
+                raise ValueError("Diesel price is unavailable.")
+
+            # Collect inputs from GUI
+            origin = origin_entry.get()
+            destination = destination_entry.get()
             number_of_days = float(days_entry.get())
             fuel_efficiency_mpg = float(fuel_efficiency_entry.get())
             fitter_rate = float(fitter_rate_entry.get())
             apprentice_rate = float(apprentice_rate_entry.get())
             travel_option = travel_option_var.get()
-            one_way_travel_time = float(travel_time_entry.get())
+            one_way_travel_time = None
+            distance = None
+            local_diesel_price = None  # Local variable for diesel price
+
+            if mode.get() == "automatic":
+
+                local_diesel_price = diesel_price_per_litre
+                distance, one_way_travel_time = get_distance_and_time(API_KEY, origin, destination)
+                if distance is None or one_way_travel_time is None:
+                    raise ValueError("Unable to fetch distance or travel time. Please check your locations.")
+            
+            else:
+                # Manual mode inputs
+                distance = float(travel_miles_entry.get())
+                one_way_travel_time = float(travel_time_entry.get())
+                local_diesel_price = float(fuel_cost_entry.get())
 
             # Perform the cost calculations
             result_text = calculate_costs(
                 number_of_days=number_of_days,
                 daily_distance=distance,
                 fuel_efficiency_mpg=fuel_efficiency_mpg,
-                diesel_price_per_litre=diesel_price,
+                diesel_price_per_litre=local_diesel_price,
                 fitter_rate=fitter_rate,
                 apprentice_rate=apprentice_rate,
                 travel_option=travel_option,
                 one_way_travel_time=one_way_travel_time,
             )
 
-            # Display the result
+            
+
+            # Display the result in the results textbox
             result_textbox.config(state="normal")
             result_textbox.delete("1.0", tk.END)
             result_textbox.insert(tk.END, result_text)
             result_textbox.config(state="disabled")
+
         except ValueError as e:
+            # Handle errors and display them in the results textbox
             result_textbox.config(state="normal")
             result_textbox.delete("1.0", tk.END)
             result_textbox.insert(tk.END, f"Error: {e}")
             result_textbox.config(state="disabled")
+
 
 
     # Header
@@ -155,9 +173,14 @@ def launch_gui():
     apprentice_rate_entry = ttk.Entry(input_frame)
     apprentice_rate_entry.grid(row=5, column=1, padx=10, pady=5, sticky="w")
 
-    ttk.Label(input_frame, text="One-Way Travel Time (hours):", background="#2c3e50", foreground="white").grid(row=6, column=0, padx=10, pady=5, sticky="e")
+    # Frame for the Travel Time input (manual mode only)
+   # Travel Time (Manual Mode Only)
+    travel_time_label = ttk.Label(input_frame, text="One-Way Travel Time (minutes):", background="#2c3e50", foreground="white")
+    travel_time_label.grid(row=6, column=0, padx=10, pady=5, sticky="e")  # Align label to the right
     travel_time_entry = ttk.Entry(input_frame)
-    travel_time_entry.grid(row=6, column=1, padx=10, pady=5, sticky="w")
+    travel_time_entry.grid(row=6, column=1, padx=10, pady=5, sticky="w")  # Align entry to the left5)
+
+    
 
     # Travel Option Dropdown
     travel_option_var = tk.StringVar(value="Return + Overtime")
