@@ -1,13 +1,18 @@
 import tkinter as tk
 from tkinter import ttk, scrolledtext
 from calculations import calculate_costs
-from utils.api_integration import get_distance, API_KEY
+from utils.api_integration import get_distance_and_time, API_KEY
 from utils.fuel_api import fetch_fuel_data, parse_diesel_price
 import requests
+
+# Global Variable for Diesel Price
 diesel_price_per_litre = None
 
 def fetch_and_set_diesel_price():
-    global diesel_price_per_litre  # Use the global variable
+    """
+    Fetch and set the global diesel price per litre.
+    """
+    global diesel_price_per_litre
     url = "https://jetlocal.co.uk/fuel_prices_data.json"  # Replace with actual URL
     fuel_data = fetch_fuel_data(url)
     if fuel_data:
@@ -18,13 +23,52 @@ def fetch_and_set_diesel_price():
         diesel_price_per_litre = "Unavailable"
 
 
+
 def launch_gui():
-    # Fetch diesel price before setting up the GUI
-    fetch_and_set_diesel_price()
-    # Function to call calculations and display results
+    # Main window
+    root = tk.Tk()
+    root.title("Travel Cost Calculator")
+    root.geometry("720x800")
+    root.config(bg="#2c3e50")
+
+    # Mode variable (to toggle between Manual and Automatic modes)
+    mode = tk.StringVar(value="automatic")  # Default mode
+
+    # Toggle between modes
+    def toggle_mode():
+        if mode.get() == "manual":
+            # Show manual inputs
+            travel_miles_label.grid(row=0, column=0, padx=10, pady=5, sticky="e")
+            travel_miles_entry.grid(row=0, column=1, padx=10, pady=5, sticky="w")
+            fuel_cost_label.grid(row=1, column=0, padx=10, pady=5, sticky="e")
+            fuel_cost_entry.grid(row=1, column=1, padx=10, pady=5, sticky="w")
+            travel_time_label.grid()
+            travel_time_entry.grid()
+
+            # Hide automatic inputs
+            origin_label.grid_remove()
+            origin_entry.grid_remove()
+            destination_label.grid_remove()
+            destination_entry.grid_remove()
+        else:
+            # Hide manual inputs
+            travel_miles_label.grid_remove()
+            travel_miles_entry.grid_remove()
+            fuel_cost_label.grid_remove()
+            fuel_cost_entry.grid_remove()
+            travel_time_label.grid_remove()
+            travel_time_entry.grid_remove()
+            
+
+            # Show automatic inputs
+            origin_label.grid(row=0, column=0, padx=10, pady=5, sticky="e")
+            origin_entry.grid(row=0, column=1, padx=10, pady=5, sticky="w")
+            destination_label.grid(row=1, column=0, padx=10, pady=5, sticky="e")
+            destination_entry.grid(row=1, column=1, padx=10, pady=5, sticky="w")
+
     def calculate_and_display_results():
         try:
-            global diesel_price_per_gallon  # Access the global variable
+            global diesel_price_per_litre  # Access the global variable
             if not isinstance(diesel_price_per_litre, float):
                 raise ValueError("Diesel price is unavailable.")
 
@@ -36,113 +80,125 @@ def launch_gui():
             fitter_rate = float(fitter_rate_entry.get())
             apprentice_rate = float(apprentice_rate_entry.get())
             travel_option = travel_option_var.get()
-            one_way_travel_time = float(travel_time_entry.get())
+            one_way_travel_time = None
+            distance = None
+            local_diesel_price = None  # Local variable for diesel price
 
-            # Fetch distance from the API
-            distance = get_distance(API_KEY, origin, destination)
-            if distance is None:
-                raise ValueError("Unable to fetch distance. Please check your locations.")
+            if mode.get() == "automatic":
+
+                local_diesel_price = diesel_price_per_litre
+                distance, one_way_travel_time = get_distance_and_time(API_KEY, origin, destination)
+                if distance is None or one_way_travel_time is None:
+                    raise ValueError("Unable to fetch distance or travel time. Please check your locations.")
+            
+            else:
+                # Manual mode inputs
+                distance = float(travel_miles_entry.get())
+                one_way_travel_time = float(travel_time_entry.get())
+                local_diesel_price = float(fuel_cost_entry.get())
 
             # Perform the cost calculations
             result_text = calculate_costs(
                 number_of_days=number_of_days,
                 daily_distance=distance,
                 fuel_efficiency_mpg=fuel_efficiency_mpg,
-                diesel_price_per_litre=diesel_price_per_litre,
+                diesel_price_per_litre=local_diesel_price,
                 fitter_rate=fitter_rate,
                 apprentice_rate=apprentice_rate,
                 travel_option=travel_option,
                 one_way_travel_time=one_way_travel_time,
             )
 
-            # Display the result
+            
+
+            # Display the result in the results textbox
             result_textbox.config(state="normal")
             result_textbox.delete("1.0", tk.END)
             result_textbox.insert(tk.END, result_text)
             result_textbox.config(state="disabled")
+
         except ValueError as e:
+            # Handle errors and display them in the results textbox
             result_textbox.config(state="normal")
             result_textbox.delete("1.0", tk.END)
             result_textbox.insert(tk.END, f"Error: {e}")
             result_textbox.config(state="disabled")
-            
-            
 
 
-
-    # GUI setup
-    root = tk.Tk()
-    root.title("Travel Cost Calculator")
-    root.geometry("720x800")
-    root.config(bg="#2c3e50")  # Dark Blue Background
-
-    # Style Configurations
-    style = ttk.Style()
-    style.configure("TLabel", font=("Arial", 12), background="#2c3e50", foreground="#ecf0f1")
-    style.configure("TButton", font=("Arial", 12, "bold"), background="#1abc9c", foreground="white", padding=10)
-    style.map("TButton", background=[("active", "#16a085")])
 
     # Header
     header_label = ttk.Label(root, text="Travel Cost Calculator", font=("Arial", 20, "bold"), foreground="#1abc9c", background="#2c3e50")
     header_label.pack(pady=20)
 
+    # Mode Buttons
+    mode_frame = tk.Frame(root, bg="#2c3e50")
+    mode_frame.pack(pady=10)
+
+    manual_button = tk.Radiobutton(mode_frame, text="Manual Mode", variable=mode, value="manual", command=toggle_mode, bg="#2c3e50", fg="white", selectcolor="#34495e")
+    auto_button = tk.Radiobutton(mode_frame, text="Automatic Mode", variable=mode, value="automatic", command=toggle_mode, bg="#2c3e50", fg="white", selectcolor="#34495e")
+    manual_button.grid(row=0, column=0, padx=10)
+    auto_button.grid(row=0, column=1, padx=10)
 
     # Input Frame
     input_frame = tk.Frame(root, bg="#2c3e50")
     input_frame.pack(pady=10)
 
-    fields = [
-            ("Origin Location:", "origin_entry"),
-            ("Destination Location:", "destination_entry"),
-            ("Number of Days:", "days_entry"),
-            ("Fuel Efficiency (MPG):", "fuel_efficiency_entry"),
-            ("Fitter Hourly Rate (£):", "fitter_rate_entry"),
-            ("Apprentice Hourly Rate (£):", "apprentice_rate_entry"),
-            ("One-Way Travel Time (hours):", "travel_time_entry"),
-]
+    input_frame.columnconfigure(0, weight=1)  # Column for labels
+    input_frame.columnconfigure(1, weight=1)  # Column for inputs
 
+    # Input Labels and Entries
+    travel_miles_label = tk.Label(input_frame, text="Travel Miles:", bg="#2c3e50", fg="white")
+    travel_miles_entry = tk.Entry(input_frame)
+    fuel_cost_label = tk.Label(input_frame, text="Fuel Cost (£ per litre):", bg="#2c3e50", fg="white")
+    fuel_cost_entry = tk.Entry(input_frame)
 
-    entries = {}
-    for i, (label, var_name) in enumerate(fields):
-        ttk.Label(input_frame, text=label).grid(row=i, column=0, sticky="w", padx=10, pady=5)
-        entry = tk.Entry(input_frame, font=("Arial", 11), bg="#ecf0f1", fg="#333333", relief="flat", bd=0)
-        entry.grid(row=i, column=1, padx=10, pady=5, ipady=6, ipadx=8)
-        entries[var_name] = entry
+    origin_label = tk.Label(input_frame, text="Start Location:", bg="#2c3e50", fg="white")
+    origin_entry = tk.Entry(input_frame)
+    destination_label = tk.Label(input_frame, text="Destination Location:", bg="#2c3e50", fg="white")
+    destination_entry = tk.Entry(input_frame)
 
+    ttk.Label(input_frame, text="Number of Days:", background="#2c3e50", foreground="white").grid(row=2, column=0, padx=10, pady=5, sticky="e")
+    days_entry = ttk.Entry(input_frame)
+    days_entry.grid(row=2, column=1, padx=10, pady=5, sticky="w")
 
-    # Assign variables
-    origin_entry = entries["origin_entry"]
-    destination_entry = entries["destination_entry"]
-    days_entry = entries["days_entry"]
-    fuel_efficiency_entry = entries["fuel_efficiency_entry"]
-    fitter_rate_entry = entries["fitter_rate_entry"]
-    apprentice_rate_entry = entries["apprentice_rate_entry"]
-    travel_time_entry = entries["travel_time_entry"]
+    ttk.Label(input_frame, text="Fuel Efficiency (MPG):", background="#2c3e50", foreground="white").grid(row=3, column=0, padx=10, pady=5, sticky="e")
+    fuel_efficiency_entry = ttk.Entry(input_frame)
+    fuel_efficiency_entry.grid(row=3, column=1, padx=10, pady=5, sticky="w")
 
+    ttk.Label(input_frame, text="Fitter Hourly Rate (£):", background="#2c3e50", foreground="white").grid(row=4, column=0, padx=10, pady=5, sticky="e")
+    fitter_rate_entry = ttk.Entry(input_frame)
+    fitter_rate_entry.grid(row=4, column=1, padx=10, pady=5, sticky="w")
+
+    ttk.Label(input_frame, text="Apprentice Hourly Rate (£):", background="#2c3e50", foreground="white").grid(row=5, column=0, padx=10, pady=5, sticky="e")
+    apprentice_rate_entry = ttk.Entry(input_frame)
+    apprentice_rate_entry.grid(row=5, column=1, padx=10, pady=5, sticky="w")
+
+    # Frame for the Travel Time input (manual mode only)
+   # Travel Time (Manual Mode Only)
+    travel_time_label = ttk.Label(input_frame, text="One-Way Travel Time (minutes):", background="#2c3e50", foreground="white")
+    travel_time_label.grid(row=6, column=0, padx=10, pady=5, sticky="e")  # Align label to the right
+    travel_time_entry = ttk.Entry(input_frame)
+    travel_time_entry.grid(row=6, column=1, padx=10, pady=5, sticky="w")  # Align entry to the left5)
+
+    
 
     # Travel Option Dropdown
     travel_option_var = tk.StringVar(value="Return + Overtime")
-    ttk.Label(input_frame, text="Travel Scenario:").grid(row=len(fields), column=0, sticky="w", padx=10, pady=5)
-    travel_option_dropdown = ttk.Combobox(input_frame, textvariable=travel_option_var, values=["One Way", "Return Trip", "Return + Overtime"], state="readonly", font=("Arial", 11), width=19)
-    travel_option_dropdown.grid(row=len(fields), column=1, padx=10, pady=5)
+    ttk.Label(input_frame, text="Travel Scenario:", background="#2c3e50", foreground="white").grid(row=7, column=0, padx=10, pady=5, sticky="e")
+    travel_option_dropdown = ttk.Combobox(input_frame, textvariable=travel_option_var, values=["One Way", "Return Trip", "Return + Overtime"], state="readonly")
+    travel_option_dropdown.grid(row=7, column=1, padx=10, pady=5)
 
     # Calculate Button
-    calculate_button = tk.Button(root, text="Calculate Costs", command=lambda: calculate_and_display_results(), font=("Arial", 12, "bold"), bg="#1abc9c", fg="white", activebackground="#16a085", activeforeground="white", relief="flat", bd=0)
-    calculate_button.pack(pady=15, ipady=6, ipadx=20)
+    calculate_button = tk.Button(root, text="Calculate Costs", command=calculate_and_display_results, bg="#1abc9c", fg="white", font=("Arial", 12, "bold"), relief="flat", bd=0)
+    calculate_button.pack(pady=20)
 
-    # Results Frame
-    results_frame = ttk.Frame(root, style="TFrame")
-    results_frame.pack(pady=10)
-
-    # Scrollable Text Output
-    result_textbox = scrolledtext.ScrolledText(results_frame, wrap="word", width=70, height=15, font=("Arial", 11), background="#ecf0f1", foreground="#2c3e50", relief="flat", bd=0)
+    # Results Display
+    result_textbox = scrolledtext.ScrolledText(root, wrap="word", width=70, height=15, font=("Arial", 11), bg="#ecf0f1", fg="#2c3e50", relief="flat", bd=0)
     result_textbox.pack(padx=10, pady=10)
-    result_textbox.config(state="disabled")
 
-    # Footer
-    footer_label = ttk.Label(root, text="Bilbo's Travel Cost Calculator", font=("Arial", 10), foreground="#95a5a6", background="#2c3e50")
-    footer_label.pack(pady=10)
+    # Initialize toggling
+    toggle_mode()
+    fetch_and_set_diesel_price()
 
-    # Start the GUI Loop
+    # Start GUI loop
     root.mainloop()
-

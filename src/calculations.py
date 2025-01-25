@@ -1,5 +1,6 @@
 def calculate_costs(number_of_days, daily_distance, fuel_efficiency_mpg, diesel_price_per_litre,
-                    fitter_rate, apprentice_rate, travel_option, one_way_travel_time):
+                    fitter_rate, apprentice_rate, travel_option, one_way_travel_time, manual_mode=False,):
+    travel_time_in_hours = one_way_travel_time / 60
     fitter_overtime = fitter_rate * 1.5
     apprentice_overtime = apprentice_rate * 1.5
 
@@ -16,24 +17,30 @@ def calculate_costs(number_of_days, daily_distance, fuel_efficiency_mpg, diesel_
     daily_fuel_cost = daily_fuel_usage * diesel_price_per_litre 
 
     if travel_option == "One Way":
-        fitter_travel_cost = one_way_travel_time * fitter_rate
-        apprentice_travel_cost = one_way_travel_time * apprentice_rate
+        fitter_travel_cost = travel_time_in_hours * fitter_rate
+        apprentice_travel_cost = travel_time_in_hours * apprentice_rate
     elif travel_option == "Return Trip":
-        fitter_travel_cost = 2 * one_way_travel_time * fitter_rate
-        apprentice_travel_cost = 2 * one_way_travel_time * apprentice_rate
+        fitter_travel_cost = 2 * travel_time_in_hours * fitter_rate
+        apprentice_travel_cost = 2 * travel_time_in_hours * apprentice_rate
     elif travel_option == "Return + Overtime":
-        fitter_travel_cost = (one_way_travel_time * fitter_rate) + (one_way_travel_time * fitter_overtime)
-        apprentice_travel_cost = (one_way_travel_time * apprentice_rate) + (one_way_travel_time * apprentice_overtime)
+        fitter_travel_cost = (travel_time_in_hours * fitter_rate) + (travel_time_in_hours * fitter_overtime)
+        apprentice_travel_cost = (travel_time_in_hours * apprentice_rate) + (travel_time_in_hours * apprentice_overtime)
 
     daily_labor_travel_cost = fitter_travel_cost + apprentice_travel_cost
     daily_total_travel_cost = daily_labor_travel_cost + daily_fuel_cost
     total_travel_cost = daily_total_travel_cost * number_of_days
+
+    if manual_mode:
+        travel_time = one_way_travel_time
+    else:
+        travel_time = one_way_travel_time 
     
 
     return (
         f"=== Travel Cost Breakdown ===\n"
-        f"Travel Scenario: {travel_option}\n"
+        f"Travel Scenario: {travel_option}\n" #I think I need to add minutes it in here and the logic for manual, auto above?
         f"Adjusted Daily Distance: {adjusted_distance} miles\n"
+        f"One-Way Travel Time: {travel_time:.1f} minutes\n"
         f"Fuel Efficiency: {fuel_efficiency_mpg} MPG\n"
         f"Diesel Per Ltr: £{diesel_price_per_litre:.2f}\n"
         f"Daily Fuel Cost: £{daily_fuel_cost:.2f}\n\n"
