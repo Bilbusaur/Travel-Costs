@@ -9,7 +9,7 @@ An intuitive Python application designed to calculate travel costs dynamically u
 
 **Current Features**
 - **Dynamic Distance Calculation**:
-   - Automatically fetches distances between locations using the **Google Maps Distance Matrix API**.
+   - Automatically fetches distances and travel times between locations using the **Google Maps Distance Matrix API**.
    - Adjusts distances based on travel scenarios (e.g., One Way, Return Trip, or Return + Overtime).
 
 - **Live Fuel Price Integration**:
@@ -26,7 +26,7 @@ An intuitive Python application designed to calculate travel costs dynamically u
 ---
 
 **How It Works**
-1. Enter the origin and destination for the journey.
+1. Enter the start and destination for the journey.
 2. Input details such as:
    - Number of days.
    - Fuel efficiency (in MPG).
@@ -36,7 +36,10 @@ An intuitive Python application designed to calculate travel costs dynamically u
    - **Return Trip**
    - **Return + Overtime**
 4. View the detailed cost breakdown:
-   - Daily and total costs for fuel, labor, and travel time.
+   - Daily and total costs for fuel, labor, and travel.
+5. Manual & Automatic mode 
+   - Automatic mode - collects the fuel price, ditstance miles and minutes as inputs.
+   - Manual back up mode, manually enter one-way distance and fuel prices and travel time for the calculations.
 
 ---
 
@@ -68,5 +71,12 @@ An intuitive Python application designed to calculate travel costs dynamically u
 🐒🔥✨
 
 ---
+## License
+
+**All Rights Reserved**
+
+This project and its associated code are protected under copyright law. Redistribution, modification, or commercial use is strictly prohibited without prior written consent from the author.
+
+Copyright © 2025 Billy. All Rights Reserved.
 
 
