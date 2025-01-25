@@ -36,20 +36,7 @@ An intuitive Python application designed to calculate travel costs dynamically u
    - **Return Trip**
    - **Return + Overtime**
 4. View the detailed cost breakdown:
-   - Daily and total costs for fuel, labor, and travel.
-
----
-
-**Future Goals**
-1. **Toggle for One-Way Travel Time**:
-   - Add an option to let the Google API calculate travel time dynamically, simplifying input.
-
-2. **Manual Mileage Input**:
-   - Provide a fallback for manual mileage input in case of API failures.
-
-3. **Program Polish**:
-   - Improve the interface design for clarity and usability.
-   - Streamline error handling and provide helpful feedback for incorrect inputs.
+   - Daily and total costs for fuel, labor, and travel time.
 
 ---
 
