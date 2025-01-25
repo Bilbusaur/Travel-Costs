@@ -10,15 +10,42 @@ diesel_price_per_litre = None
 
 def fetch_and_set_diesel_price():
     """
-    Fetch and set the global diesel price per litre.
+    Fetch and calculate the average diesel price per litre from multiple sources.
     """
     global diesel_price_per_litre
-    url = "https://jetlocal.co.uk/fuel_prices_data.json"  # Replace with actual URL
-    fuel_data = fetch_fuel_data(url)
-    if fuel_data:
-        diesel_price_per_litre = parse_diesel_price(fuel_data)
-        if diesel_price_per_litre is None:
-            diesel_price_per_litre = "Unavailable"
+    urls = {
+        "jetlocal": "https://jetlocal.co.uk/fuel_prices_data.json",
+        "applegreen": "https://applegreenstores.com/fuel-prices/data.json",
+        "asconagroup": "https://fuelprices.asconagroup.co.uk/newfuel.json",
+        "asda": "https://storelocator.asda.com/fuel_prices_data.json",
+        "bp": "https://www.bp.com/en_gb/united-kingdom/home/fuelprices/fuel_prices_data.json",
+        "esso_tesco_alliance": "https://fuelprices.esso.co.uk/latestdata.json",
+        #"karanretail": "https://api2.krlmedia.com/integration/live_price/krl",
+        "morrisons": "https://www.morrisons.com/fuel-prices/fuel.json",
+        "moto": "https://moto-way.com/fuel-price/fuel_prices.json",
+       # "rontec": "https://www.rontec-servicestations.co.uk/fuel-prices/data/fuel_prices_data.json",
+        "sainsbury’s": "https://api.sainsburys.co.uk/v1/exports/latest/fuel_prices_data.json",
+        "sgn": "https://www.sgnretail.uk/files/data/SGN_daily_fuel_prices.json",
+        "shell": "https://www.shell.co.uk/fuel-prices-data.html",
+        #"tesco": "https://www.tesco.com/fuel_prices/fuel_prices_data.json",
+        
+    }
+
+    prices_per_litre = []
+
+    for source_name, url in urls.items():
+        fuel_data = fetch_fuel_data(url)
+        if fuel_data:
+            stations = fuel_data.get("stations", [])
+            for station in stations:
+                prices = station.get("prices", {})
+                diesel_price = prices.get("B7")  # Assuming B7 represents diesel
+                if diesel_price is not None:
+                    prices_per_litre.append(diesel_price / 100)  # Convert pence to pounds
+
+    if prices_per_litre:
+        # Calculate average diesel price across all sources
+        diesel_price_per_litre = sum(prices_per_litre) / len(prices_per_litre)
     else:
         diesel_price_per_litre = "Unavailable"
 
@@ -193,7 +220,7 @@ def launch_gui():
     calculate_button.pack(pady=20)
 
     # Results Display
-    result_textbox = scrolledtext.ScrolledText(root, wrap="word", width=70, height=15, font=("Arial", 11), bg="#ecf0f1", fg="#2c3e50", relief="flat", bd=0)
+    result_textbox = scrolledtext.ScrolledText(root, wrap="word", width=70, height=16, font=("Arial", 11), bg="#ecf0f1", fg="#2c3e50", relief="flat", bd=0)
     result_textbox.pack(padx=10, pady=10)
 
     # Initialize toggling
