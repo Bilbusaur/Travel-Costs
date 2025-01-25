@@ -1,5 +1,13 @@
 import requests
-API_KEY = "AIzaSyDMW-mucmUKwJ7EczKWAOW_uVqjyGtlsUo"  # Replace with your actual API key
+from dotenv import load_dotenv
+import os
+
+# Load environment variables from .env file
+load_dotenv()
+
+API_KEY = os.getenv("API_KEY")  # Fetch the API key from the environment variable 
+if not API_KEY:
+    raise ValueError("API_KEY is not set in the environment variables.")
 
 print("Requests version:", requests.__version__)
 
