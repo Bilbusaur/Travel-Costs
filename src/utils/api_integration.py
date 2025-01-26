@@ -1,11 +1,9 @@
 import requests
-from dotenv import load_dotenv
-import os
 
-# Load environment variables from .env file
-load_dotenv()
 
-API_KEY = os.getenv("API_KEY")  # Fetch the API key from the environment variable 
+
+
+API_KEY = "AIzaSyDMW-mucmUKwJ7EczKWAOW_uVqjyGtlsUo"
 if not API_KEY:
     raise ValueError("API_KEY is not set in the environment variables.")
 
